@@ -1,74 +1,63 @@
 import streamlit as st
 from data import DEVICES, DEMENTIA_ICD
 
-st.set_page_config(page_title="輔具審查助手 V3", layout="wide")
+st.set_page_config(page_title="輔具補助智慧查詢系統", layout="wide")
 
-st.title("♿ 輔具費用補助判定系統 (2026 完整版)")
+st.title("🔍 輔具費用補助全功能查詢")
+st.caption("輸入項次、名稱或關鍵字即可快速鎖定規則")
+
+# --- 搜尋功能區 ---
+search_query = st.text_input("搜尋輔具名稱或項次 (例如: 輪椅, 154, 照顧床)", "")
+
+# 根據搜尋關鍵字過濾項次
+filtered_items = {
+    k: v for k, v in DEVICES.items() 
+    if search_query.lower() in v['name'].lower() or search_query in k
+}
+
+if not filtered_items:
+    st.warning("找不到符合關鍵字的輔具，請重新輸入。")
+    st.stop()
+
+# 選擇過濾後的項次
+item_id = st.selectbox("請選擇確切輔具項次", options=list(filtered_items.keys()), 
+                        format_func=lambda x: f"項次 {x}: {DEVICES[x]['name']}")
+
+dev = DEVICES[item_id]
+
+# --- 判定邏輯區 ---
 st.markdown("---")
+col_input, col_info = st.columns([1, 1])
 
-# 介面佈局
-col_in, col_res = st.columns([4, 6], gap="large")
+with col_info:
+    st.info(f"### 📋 基準資訊\n"
+            f"* **項次名稱：** {dev['name']}\n"
+            f"* **評估級別：** {dev['eval']}\n"
+            f"* **評估處所：** {'🚨 限輔具中心' if dev['center_only'] else '✅ 醫院、中心均可'}")
 
-with col_in:
-    st.subheader("📥 資料輸入")
-    item_id = st.selectbox("1. 選擇項次編號", options=list(DEVICES.keys()), 
-                          format_func=lambda x: f"項次 {x}: {DEVICES[x]['name']}")
+with col_input:
+    st.subheader("🧪 資格判定")
+    icf_in = st.text_input("1. 輸入 ICF 代碼 (逗號隔開)", placeholder="b117, 10")
+    icd_in = st.text_input("2. 輸入 ICD 診斷碼 (失智症才需填寫)", placeholder="F03")
     
-    dev = DEVICES[item_id]
-    
-    # 針對您發現的跨項區域顯示警告
-    item_num = int(item_id)
-    if (154 <= item_num <= 162) or (14 <= item_num <= 15) or (164 <= item_num <= 168):
-        st.warning(f"⚠️ 跨項規定提醒：項次 {item_id} 若為失智症，必須嚴格檢查 ICD 代碼。")
-
-    icf_raw = st.text_input("2. 輸入病人 ICF 代碼 (逗號隔開)", placeholder="如: b117, 10")
-    icd_raw = st.text_input("3. 輸入診斷 ICD 代碼 (失智症必填)", placeholder="如: F03")
-    
-    check_btn = st.button("啟動判定分析", type="primary")
-
-with col_res:
-    st.subheader("🔍 判定報告")
-    if check_btn:
-        if not icf_raw:
-            st.error("請輸入 ICF 代碼。")
-        else:
-            u_icfs = [x.strip().lower() for x in icf_raw.split(",")]
-            u_icd = icd_raw.strip().upper()
-            
-            is_ok = False
-            match_cat = ""
-            
-            for rule in dev["rules"]:
-                # 檢查 ICF
-                if any(code in u_icfs for code in rule["icf"]):
-                    # 檢查交集邏輯
-                    if rule.get("and_icd"):
-                        if u_icd in DEMENTIA_ICD:
-                            is_ok = True
-                            match_cat = rule["cat"]
-                            break
-                        else:
-                            st.error(f"❌ 診斷不符：ICF 符合 {rule['cat']}，但 ICD {u_icd} 不在補助名單內。")
-                            st.stop()
+    if st.button("執行判定", type="primary"):
+        u_icfs = [x.strip().lower() for x in icf_in.split(",")]
+        u_icd = icd_raw = icd_in.strip().upper()
+        
+        match = False
+        match_cat = ""
+        for r in dev["rules"]:
+            if any(i in u_icfs for i in r["icf"]):
+                if r.get("and_icd"):
+                    if u_icd in DEMENTIA_ICD:
+                        match = True; match_cat = r["cat"]; break
                     else:
-                        is_ok = True
-                        match_cat = rule["cat"]
-                        break
-            
-            if is_ok:
-                st.success(f"✅ **判定結果：符合資格** ({match_cat})")
-                st.markdown(f"""
-                ---
-                **📋 審核重點：**
-                * **評估人員級別：** {dev['eval']}
-                * **開立處所限制：** {'🚨 **限由輔具中心開立報告**' if dev['center_only'] else '✅ 醫院或輔具中心均可'}
-                """)
-            else:
-                st.error("❌ **判定結果：不符合資格** (ICF 代碼未命中規則)")
-
-st.sidebar.markdown("""
-### 系統資訊
-- **資料庫範圍：** 涵蓋 1-172 項次
-- **邏輯檢核：** 包含跨項次合併規定
-- **更新日期：** 2026-04-10
-""")
+                        st.error(f"❌ 診斷不符：符合 ICF {r['cat']}，但 ICD {u_icd} 不在失智症補助清單。")
+                        st.stop()
+                else:
+                    match = True; match_cat = r["cat"]; break
+        
+        if match:
+            st.success(f"🎯 **判定符合：{match_cat}**")
+        else:
+            st.error("❌ **判定不符合：代碼未命中規則**")
