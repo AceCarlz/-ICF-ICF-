@@ -58,14 +58,14 @@ for i in range(110, 114):
 for i in range(135, 154):
     DEVICES[str(i)] = {"name": f"住家家具及改裝組件項次 {i}", "eval": "甲、丁、戊類", "center_only": False, "rules": [RULE_PHYSICAL_STD]}
 
-# 154-162. 照顧床與床墊系列 (甲、丁、戊類)
+# 154-162. 住家家具及改裝組件 (甲、丁、戊類)
 for i in range(154, 163):
-    DEVICES[str(i)] = {"name": f"照顧床/墊項次 {i}", "eval": "甲、丁、戊類", "center_only": False, "rules": [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD]}
+    DEVICES[str(i)] = {"name": f"住家家具及改裝組件項次 {i}", "eval": "甲、丁、戊類", "center_only": False, "rules": [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD]}
 
 # 163-164. 清洗槽與氣墊座
-DEVICES["163"] = {"name": "移動式身體清洗槽", "eval": "甲、丁類", "center_only": False, "rules": [RULE_DEMENTIA_STD]}
-DEVICES["164"] = {"name": "輪椅氣墊座-A款", "eval": "甲、丁類", "center_only": False, "rules": [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD]}
+DEVICES["163"] = {"name": "移動式身體清洗槽-局部型", "eval": "甲、丁類", "center_only": False, "rules": [RULE_DEMENTIA_STD]}
+DEVICES["164"] = {"name": "移動式身體清洗槽-全身型", "eval": "甲、丁類", "center_only": False, "rules": [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD]}
 
-# 165-172. 移位機與爬梯機 (170, 171 為 ◇)
+# 165-172. 移位/沐浴輔具 (已修正：醫院、中心均可)
 for i in range(165, 173):
-    DEVICES[str(i)] = {"name": f"移位/爬梯項次 {i}", "eval": "免評，項次170-172甲類", "center_only": (i in [170, 171]), "rules": [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD]}
+    DEVICES[str(i)] = {"name": f"個人照顧及保護輔具項次 {i}", "eval": "免評，項次170-172必甲類評", "center_only": False, "rules": [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD]}
