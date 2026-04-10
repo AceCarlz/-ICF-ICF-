@@ -48,7 +48,7 @@ for i in range(135, 154):
 
 # 154-162. 照顧床與床墊系列
 for i in range(154, 163):
-    DEVICES[str(i)] = {"name": f"照顧床/墊項次 {i}", "eval": "甲、丁、戊類 (註：161&162僅甲、丁可評)", "center_only": False, "rules": [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD]}
+    DEVICES[str(i)] = {"name": f"照顧床/墊項次 {i}", "eval": "甲、丁、戊類 (註：163&164僅甲、丁可評)", "center_only": False, "rules": [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD]}
 
 # 163-164. 清洗槽與氣墊座
 DEVICES["163"] = {"name": "移動式身體清洗槽", "eval": "不需評估", "center_only": False, "rules": [RULE_DEMENTIA_STD]}
