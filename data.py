@@ -16,41 +16,44 @@ RULE_VISION_STD = {"cat": "第二類(視障)", "icf": ["b210", "s220", "02"]}
 
 DEVICES = {}
 
-# 批量錄入邏輯 (依據您提供的範圍)
-# 3-6, 7-9: 輪椅與附加功能 (甲類)
-for i in range(3, 10):
-    DEVICES[str(i)] = {"name": f"輪椅相關項次 {i}", "eval": "甲類", "center_only": (i in [6, 10]), "rules": [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD]}
+# 1-2. 推車
+for i in range(1, 3):
+    DEVICES[str(i)] = {"name": f"推車項次 {i}", "eval": "甲類", "center_only": False, "rules": [RULE_PHYSICAL_STD]}
 
-# 13: 輪椅配件
-DEVICES["13"] = {"name": "輪椅配件-後推式動力套件", "eval": "甲類", "center_only": False, "rules": [RULE_DEMENTIA_STD]}
+# 3-9. 輪椅及其功能 (含 6, 10 為 ◇)
+for i in range(3, 11):
+    DEVICES[str(i)] = {"name": f"輪椅及功能項次 {i}", "eval": "甲類", "center_only": (i in [6, 10]), "rules": [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD]}
 
-# 42-48, 49-51, 52-54, 55-57: 個人行動輔具 (甲類)
+# 13. 輪椅配件
+DEVICES["13"] = {"name": "輪椅配件-後推式動力套件", "eval": "甲類", "center_only": False, "rules": [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD]}
+
+# 42-57. 個人行動輔具 (已修正：加入失智症規則)
 for i in range(42, 58):
-    DEVICES[str(i)] = {"name": f"個人行動輔具項次 {i}", "eval": "甲類", "center_only": False, "rules": [RULE_PHYSICAL_STD]}
+    DEVICES[str(i)] = {"name": f"個人行動輔具項次 {i}", "eval": "甲類", "center_only": False, "rules": [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD]}
 
-# 91: 個人衛星定位器 (不需評估, 失智症)
+# 91. 個人衛星定位器
 DEVICES["91"] = {"name": "個人衛星定位器", "eval": "甲、丁類", "center_only": False, "rules": [RULE_DEMENTIA_STD]}
 
-# 94-100: 溝通及資訊輔具 (乙類)
+# 94-100. 溝通及資訊輔具
 for i in range(94, 101):
-    DEVICES[str(i)] = {"name": f"溝通及資訊輔具項次 {i}", "eval": "乙類", "center_only": False, "rules": [{"cat": "第一/七類", "icf": ["b117", "b147", "b730", "01", "05"]}]}
+    DEVICES[str(i)] = {"name": f"溝通及資訊輔具項次 {i}", "eval": "乙類", "center_only": False, "rules": [{"cat": "第一/三/七類", "icf": ["b117", "b147", "b310", "b730", "01", "04", "05"]}]}
 
-# 110-113: 身體、肌力及平衡訓練輔具項次 (甲類)
+# 110-113. 訓練輔具 (已修正：加入失智症與肢障規則)
 for i in range(110, 114):
-    DEVICES[str(i)] = {"name": f"身體、肌力及平衡訓練輔具項次 {i}", "eval": "甲類", "center_only": False, "rules": [RULE_SPEECH_STD]}
+    DEVICES[str(i)] = {"name": f"訓練輔具項次 {i}", "eval": "甲類", "center_only": False, "rules": [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD, RULE_SPEECH_STD]}
 
-# 135-153: 住家家具及改裝組件 (甲類)
+# 135-153. 住家家具及改裝組件
 for i in range(135, 154):
     DEVICES[str(i)] = {"name": f"住家家具及改裝組件項次 {i}", "eval": "甲、丁、戊類", "center_only": False, "rules": [RULE_PHYSICAL_STD]}
 
-# 154-162: 照顧床與床墊系列 (甲類, 關鍵跨項)
+# 154-162. 照顧床與床墊系列
 for i in range(154, 163):
-    DEVICES[str(i)] = {"name": f"照顧床/墊項次 {i}", "eval": "甲、丁、戊類，163&164僅甲、丁", "center_only": False, "rules": [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD]}
+    DEVICES[str(i)] = {"name": f"照顧床/墊項次 {i}", "eval": "甲、丁、戊類 (註：161&162僅甲、丁可評)", "center_only": False, "rules": [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD]}
 
-# 163-164: 清洗槽與氣墊座
+# 163-164. 清洗槽與氣墊座
 DEVICES["163"] = {"name": "移動式身體清洗槽", "eval": "不需評估", "center_only": False, "rules": [RULE_DEMENTIA_STD]}
 DEVICES["164"] = {"name": "輪椅氣墊座-A款", "eval": "甲類", "center_only": False, "rules": [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD]}
 
-# 165, 166-169, 170-172: 移位機與爬梯機 (甲類)
+# 165-172. 移位機與爬梯機
 for i in range(165, 173):
     DEVICES[str(i)] = {"name": f"移位/爬梯項次 {i}", "eval": "甲類", "center_only": (i in [170, 171]), "rules": [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD]}
