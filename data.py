@@ -21,8 +21,8 @@ for i in range(1, 3):
     DEVICES[str(i)] = {"name": f"推車項次 {i}", "eval": "甲類", "center_only": False, "rules": [RULE_PHYSICAL_STD]}
 
 # 3-9. 輪椅及其功能 (含 6, 10 為 ◇)
-for i in range(3, 11):
-    DEVICES[str(i)] = {"name": f"輪椅及功能項次 {i}", "eval": "甲類", "center_only": (i in [6, 10]), "rules": [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD]}
+for i in range(3, 10):
+    DEVICES[str(i)] = {"name": f"輪椅及功能項次 {i}", "eval": "甲類，4&5免評", "center_only": (i in [6, 10]), "rules": [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD]}
 
 # 13. 輪椅配件
 DEVICES["13"] = {"name": "輪椅配件-後推式動力套件", "eval": "甲類", "center_only": False, "rules": [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD]}
