@@ -329,58 +329,58 @@ add_range(4, 9, "輪椅及功能", "甲類 (4&5免評)", lambda i: i == 6, [RULE
 
 # --- 10-41. 個人行動輔具斷點 ---
 add_range(10, 12, "個人行動輔具", "甲類", lambda i: i == 10, [RULE_PHYSICAL_STD])
-DEVICES["13"] = {"name": "輪椅配件-後推式動力套件 (項次 13)", "eval": "甲類", "center_only": False, "rules": [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD]}
-add_range(14, 25, "個人行動輔具-電動輪椅", "甲類", False, [RULE_PHYSICAL_STD])
-add_range(26, 29, "擺位系統", "甲類", False, [RULE_PHYSICAL_STD])
-add_range(30, 30, "電動代步車", "甲類", False, [RULE_PHYSICAL_STD])
+DEVICES["13"] = {"name": "輪椅配件-後推式動力套件 (項次 13)", "eval": "甲類", "center_only": True, "rules": [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD]}
+add_range(14, 25, "個人行動輔具-電動輪椅", "甲類", True, [RULE_PHYSICAL_STD])
+add_range(26, 29, "擺位系統", "甲類", True, [RULE_PHYSICAL_STD])
+add_range(30, 30, "電動代步車", "甲類", True, [RULE_PHYSICAL_STD])
 add_range(31, 31, "行動輔具附加功能-完成搭配機動車輛使用之衝擊測試", "甲類", False, [RULE_PHYSICAL_STD])
 add_range(32, 41, "個人行動輔具-汽機車改裝", "不需評估", False, [RULE_PHYSICAL_STD])
 
 # --- 42-57. 個人行動輔具 (原本的切割點) ---
 add_range(42, 48, "個人行動輔具", "甲類，42.44.45免評", False, [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD])
-add_range(49, 51, "個人行動輔具", "甲、丁類", False, [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD])
-add_range(52, 54, "個人行動輔具", "甲、丁類", False, [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD])
-add_range(55, 57, "個人行動輔具", "甲、丁類，項次57免評", False, [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD])
+add_range(49, 51, "個人行動輔具", "甲、丁類", True, [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD])
+add_range(52, 54, "個人行動輔具", "甲、丁類", True, [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD])
+add_range(55, 57, "個人行動輔具", "甲、丁類，項次57免評", True, [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD])
 
 # --- 58-90. 視覺/聽覺/溝通斷點 ---
 add_range(58, 62, "視覺相關輔具", "不需評估", False, [RULE_VISION_STD])
-add_range(63, 63, "特製眼鏡(含特製隱形眼鏡)", "戊類", False, [RULE_VISION_STD])
-add_range(64, 64, "角膜疾病類隱形眼鏡", "依醫師診斷", False, [RULE_VISION_STD])
-add_range(65, 70, "溝通及資訊輔具-視覺相關輔具", "甲、丁、戊類，67、69不需評估", False, [RULE_VISION_STD])
-add_range(71, 76, "溝通及資訊輔具-視覺相關輔具", "甲、丁、戊類", False, [RULE_VISION_STD])
+add_range(63, 63, "特製眼鏡(含特製隱形眼鏡)", "戊類", True, [RULE_VISION_STD])
+add_range(64, 64, "角膜疾病類隱形眼鏡", "依醫師診斷", True, [RULE_VISION_STD])
+add_range(65, 70, "溝通及資訊輔具-視覺相關輔具", "甲、丁、戊類，67、69不需評估，但65-70項次皆需診斷證明書載明輔具需求", True, [RULE_VISION_STD])
+add_range(71, 76, "溝通及資訊輔具-視覺相關輔具", "甲、丁、戊類", True, [RULE_VISION_STD])
 add_range(77, 77, "語音手機-簡易型", "不需評估", False, [RULE_VISION_STD])
-add_range(78, 78, "語音手機智慧型或平板", "甲、丁、戊類", False, [RULE_VISION_STD])
+add_range(78, 78, "語音手機智慧型或平板", "甲、丁、戊類", True, [RULE_VISION_STD])
 add_range(79, 79, "傳真機", "不需評估", False, [RULE_SPEECH_STD])
 add_range(80, 80, "行動手機簡易型", "不需評估", False, [RULE_SPEECH_STD])
-add_range(81, 81, "行動手機具雙項即時影像傳輸功能型", "甲、乙、丙、丁類", False, [RULE_SPEECH_STD])
+add_range(81, 81, "行動手機具雙項即時影像傳輸功能型", "甲、乙、丙、丁類", True, [RULE_SPEECH_STD])
 add_range(82, 85, "溝通及資訊輔具-聽覺相關輔具", "丙類", False, [RULE_HEARING_STD])
 add_range(86, 86, "溝通及資訊輔具-視覺相關輔具", "不需評估", False, [RULE_VISION_STD])
 add_range(87, 90, "溝通及資訊輔具-警示指示及信號輔具", "不需評估", False, [RULE_VISION_STD, RULE_DEMENTIA_STD])
 
 # --- 91-113. 定位/發聲/電腦/血壓計 ---
-DEVICES["91"] = {"name": "個人衛星定位器 (項次 91)", "eval": "甲、丁類", "center_only": False, "rules": [RULE_DEMENTIA_STD]}
+DEVICES["91"] = {"name": "個人衛星定位器 (項次 91)", "eval": "甲、丁類", "center_only": True, "rules": [RULE_DEMENTIA_STD]}
 add_range(92, 92, "溝通及資訊輔具-發聲輔具:人工講話器-氣動式", "不需評估", False, [RULE_SPEECH_STD])
-add_range(93, 100, "溝通及資訊輔具-發聲輔具:人工講話器-電動式", "乙類", False, [RULE_SPEECH_STD])
-add_range(101, 108, "溝通及資訊輔具-電腦輔具", "甲、乙、丁類", False, [RULE_PHYSICAL_STD, RULE_SPEECH_STD])
+add_range(93, 100, "溝通及資訊輔具-發聲輔具:人工講話器-電動式", "乙類，項次93僅可在輔具中心評估", False, [RULE_SPEECH_STD])
+add_range(101, 108, "溝通及資訊輔具-電腦輔具", "甲、乙、丁類，項次101不限地點", False, [RULE_PHYSICAL_STD, RULE_SPEECH_STD])
 add_range(109, 109, "語音血壓計", "不需評估", False, [RULE_VISION_STD])
 add_range(110, 113, "訓練輔具", "甲類", False, [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD, RULE_SPEECH_STD])
 
 # --- 114-134. 壓瘡/床/改裝相關 ---
-add_range(114, 120, "預防壓瘡輔具-座墊", "甲類", False, [RULE_PHYSICAL_STD])
+add_range(114, 120, "預防壓瘡輔具-座墊", "甲類", Truee, [RULE_PHYSICAL_STD])
 add_range(121, 122, "預防壓瘡輔具-氣墊床", "甲類", False, [RULE_PHYSICAL_STD])
 add_range(123, 127, "電動床相關項次", "甲類", False, [RULE_PHYSICAL_STD])
 add_range(128, 130, "擺位椅相關", "甲類", False, [RULE_PHYSICAL_STD])
 add_range(131, 131, "升降桌", "甲、丁類", False, [RULE_PHYSICAL_STD])
-add_range(132, 134, "居改爬梯機相關", "甲、丁類", False, [RULE_PHYSICAL_STD])
+add_range(132, 134, "居改爬梯機相關", "甲、丁類", True, [RULE_PHYSICAL_STD])
 
 # --- 135-172. 舊有項次 (已併入新分類名稱) ---
-add_range(135, 153, "住家家具及改裝組件", "甲、丁、戊類", False, [RULE_PHYSICAL_STD])
-add_range(154, 162, "住家家具及改裝組件", "甲、丁、戊類", False, [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD])
+add_range(135, 153, "住家家具及改裝組件", "甲、丁、戊類", True, [RULE_PHYSICAL_STD])
+add_range(154, 162, "住家家具及改裝組件", "甲、丁、戊類", True, [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD])
 DEVICES["163"] = {"name": "移動式身體清洗槽-局部型 (項次 163)", "eval": "甲、丁類", "center_only": False, "rules": [RULE_DEMENTIA_STD]}
 DEVICES["164"] = {"name": "移動式身體清洗槽-全身型 (項次 164)", "eval": "甲、丁類", "center_only": False, "rules": [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD]}
 add_range(165, 172, "個人照顧及保護輔具", "不需評估，項次170-172必甲類評", False, [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD])
 
 # --- 173-242. 最後補全斷點 ---
 add_range(173, 179, "個人照顧及保護輔具", "不需評估", False, [RULE_PHYSICAL_STD, RULE_DEMENTIA_STD])
-add_range(180, 239, "矯具及義具", "甲類", False, [RULE_PHYSICAL_STD])
-add_range(240, 242, "人工電子耳相關", "丙類", False, [RULE_HEARING_STD])
+add_range(180, 239, "矯具及義具", "甲類，項次230-239需依醫師診斷", True, [RULE_PHYSICAL_STD])
+add_range(240, 242, "人工電子耳相關", "乙、丙類及相關團隊", False, [RULE_HEARING_STD])
