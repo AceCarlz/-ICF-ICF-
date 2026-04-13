@@ -366,7 +366,7 @@ add_range(109, 109, "語音血壓計", "不需評估", False, [RULE_VISION_STD])
 add_range(110, 113, "訓練輔具", "甲類", False, [RULE_DEMENTIA_STD, RULE_PHYSICAL_STD, RULE_SPEECH_STD])
 
 # --- 114-134. 壓瘡/床/改裝相關 ---
-add_range(114, 120, "預防壓瘡輔具-座墊", "甲類", Truee, [RULE_PHYSICAL_STD])
+add_range(114, 120, "預防壓瘡輔具-座墊", "甲類", True, [RULE_PHYSICAL_STD])
 add_range(121, 122, "預防壓瘡輔具-氣墊床", "甲類", False, [RULE_PHYSICAL_STD])
 add_range(123, 127, "電動床相關項次", "甲類", False, [RULE_PHYSICAL_STD])
 add_range(128, 130, "擺位椅相關", "甲類", False, [RULE_PHYSICAL_STD])
