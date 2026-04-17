@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 from data import load_device_data, DEMENTIA_ICD, RULE_DEMENTIA_STD, RULE_PHYSICAL_STD
 
 st.set_page_config(page_title="輔具補助電子查詢系統", layout="wide")
