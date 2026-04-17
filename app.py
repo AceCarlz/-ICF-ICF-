@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from data import load_device_data, DEMENTIA_ICD, RULE_DEMENTIA_STD, RULE_PHYSICAL_STD
+from data import load_device_data, DEMENTIA_ICD, RULE_DEMENTIA_STD, RULE_PHYSICAL_STD, RULE_SPEECH_STD, RULE_VISION_STD, RULE_HEARING_STD
 
 st.set_page_config(page_title="輔具補助電子查詢系統", layout="wide")
 
@@ -10,8 +10,8 @@ df = load_device_data()
 if df is None:
     st.error("找不到 assistive_devices.csv 檔案，請確保檔案已上傳至正確目錄。")
 else:
-    st.title("📂 輔具補助基準電子查詢系統")
-    st.caption("輸入項次或名稱即可快速查詢最高補助額、使用年限與評估規定")
+    st.title("📂 輔具補助基準與資格判別系統")
+    st.caption("查詢項次資訊，並可於下方輸入鑑定代碼進行資格試算")
 
     # 側邊欄：搜尋功能
     with st.sidebar:
@@ -26,49 +26,78 @@ else:
 
     if not result.empty:
         for index, row in result.iterrows():
-            with st.expander(f"【項次 {row['項次']}】{row['名稱']}", expanded=True):
-                # 第一排：核心數據
+            # --- 第一部分：顯示金額與年限 (你要求先看到的資訊) ---
+            with st.container():
+                st.subheader(f"【項次 {row['項次']}】{row['名稱']}")
                 c1, c2, c3 = st.columns(3)
                 with c1:
-                    st.metric("最高補助金額", f"${int(row['最高補助金額']):,}" if str(row['最高補助金額']).isdigit() else "依規定")
+                    st.metric("最高補助金額，中低75%，一般50%", f"${int(row['最高補助金額']):,}" if str(row['最高補助金額']).isdigit() else "依規定")
                 with c2:
                     st.metric("最低使用年限", f"{row['最低使用年限']} 年")
                 with c3:
-                    st.write(f"🟢 **評估類別**：\n{row['評估類別']}")
+                    st.info(f"📍 評估地點：{row['評估地點']}")
                 
-                st.divider()
+                if row['備註']:
+                    st.warning(f"💡 備註：{row['備註']}")
+            
+            st.divider()
 
-                # 第二排：規定與地點
-                c4, c5 = st.columns(2)
-                with c4:
-                    st.info(f"📍 **建議評估地點**：\n{row['評估地點']}")
-                with c5:
-                    if row['備註']:
-                        st.warning(f"💡 **備註說明**：\n{row['備註']}")
+            # --- 第二部分：手動輸入 ICF/ICD 判別資格 ---
+            st.subheader("🧪 資格即時判別")
+            st.write("請輸入手冊上的鑑定代碼，系統將比對是否符合該項次之類別標準：")
+            
+            col_input1, col_input2 = st.columns(2)
+            with col_input1:
+                user_icf = st.text_input("輸入 ICF 代碼 (例如: b710a)", key=f"icf_{row['項次']}")
+            with col_input2:
+                user_icd = st.text_input("輸入 ICD 代碼 (例如: F03)", key=f"icd_{row['項次']}")
 
-                # --- 核心邏輯：加回 ICF / ICD 規則判定 ---
-                st.subheader("📋 判定規則參考")
+            # 判定邏輯啟動
+            if user_icf:
+                # 找出目前項次應該對應哪一條規則
+                current_rule = None
+                eval_text = str(row['評估類別'])
                 
-                # 判斷是否屬於第一類 (失智症) 規則
-                # 我們假設在 Excel 的評估類別中有提到「第一類」或「失智」
-                if any(kw in str(row['評估類別']) for kw in ["第一類", "失智"]):
-                    st.success(f"📌 **{RULE_DEMENTIA_STD['cat']} 判定標準**")
-                    st.write("**ICF 鑑定需包含下列代碼之一：**")
-                    st.code(" / ".join(RULE_DEMENTIA_STD['icf']))
+                if "第一類" in eval_text or "失智" in eval_text:
+                    current_rule = RULE_DEMENTIA_STD
+                elif "第七類" in eval_text or "甲類" in eval_text:
+                    current_rule = RULE_PHYSICAL_STD
+                elif "第三類" in eval_text:
+                    current_rule = RULE_SPEECH_STD
+                elif "第二類" in eval_text and "視" in row['名稱']:
+                    current_rule = RULE_VISION_STD
+                elif "第二類" in eval_text and "聽" in row['名稱']:
+                    current_rule = RULE_HEARING_STD
+
+                if current_rule:
+                    # 1. ICF 判別
+                    icf_match = user_icf.lower() in [i.lower() for i in current_rule['icf']]
                     
-                    with st.expander("查看完整失智症 ICD 代碼清單"):
-                        st.write(", ".join(DEMENTIA_ICD))
-
-                # 判斷是否屬於第七類 (肢體相關) 規則
-                # 大部分甲類輔具都適用第七類標準
-                if any(kw in str(row['評估類別']) for kw in ["甲類", "乙類", "第七類"]):
-                    st.info(f"📌 **{RULE_PHYSICAL_STD['cat']} 判定標準**")
-                    st.write("**ICF 鑑定需包含下列代碼之一：**")
-                    st.code(" / ".join(RULE_PHYSICAL_STD['icf']))
-                
-                # 如果是其他（例如第三類語障、第二類視障），也可以按此邏輯繼續疊加
+                    # 2. ICD 判別 (如果規則要求 ICD)
+                    icd_match = True
+                    if current_rule.get('and_icd'):
+                        icd_match = user_icd.upper() in [i.upper() for i in DEMENTIA_ICD]
+                    
+                    # 3. 顯示結果
+                    if icf_match and icd_match:
+                        st.success(f"✅ 判定符合！此人鑑定代碼符合 {current_rule['cat']} 之補助標準。")
+                    else:
+                        error_msg = "❌ 判定不符合。"
+                        if not icf_match:
+                            error_msg += f" ICF 代碼 {user_icf} 不在標準清單內。"
+                        if not icd_match:
+                            error_msg += " ICD 代碼不符合失智症特定清單。"
+                        st.error(error_msg)
+                    
+                    # 顯示標準清單供參考
+                    with st.expander("查看此項次之標準對照表"):
+                        st.write(f"**符合之 ICF 清單：** {', '.join(current_rule['icf'])}")
+                        if current_rule.get('and_icd'):
+                            st.write(f"**符合之 ICD 清單：** {', '.join(DEMENTIA_ICD[:10])}...")
+                else:
+                    st.info("ℹ️ 此項次之評估類別尚未定義自動判別規則，請參考備註說明。")
 
     elif search_query:
         st.warning("找不到符合的輔具，請嘗試更改關鍵字。")
     else:
-        st.info("💡 請在左側搜尋框輸入輔具項次或名稱開始查詢。")
+        st.info("💡 請在左側搜尋框輸入輔具項次或名稱。")
