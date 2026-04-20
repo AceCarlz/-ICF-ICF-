@@ -11,31 +11,37 @@ st.set_page_config(page_title="輔具補助智慧查詢系統", layout="wide")
 # 1. 根據項次號碼分配鑑定規則 (此處為系統最核心的精準判斷邏輯)
 def get_rules_for_item(item_id, item_name):
     rules = []
+    # 將項次轉為整數方便比對區間
     try:
         idx = int(item_id)
     except:
         idx = 0
 
-    # 判定第一類 (失智症) 範圍
+    # --- 1. 定義第一類(失智症)的項次範圍 ---
+    # 包含：後推動力套件(13)、電輪/代步車(14-30)、移位機(55-57)、定位器(91)、爬梯機(132-134)、居改(135-162)等
     if idx == 13 or (14 <= idx <= 30) or (55 <= idx <= 57) or idx == 91 or (132 <= idx <= 162):
         rules.append(RULE_DEMENTIA_STD)
 
-    # 判定第七類 (肢障) 範圍 (排除單純視聽語障項次)
-    if not (63 <= idx <= 81):
+    # --- 2. 定義第七類(肢障)的項次範圍 ---
+    # 絕大多數的輔具都適用第七類，這裡我們設為預設，或針對特定範圍
+    # 排除掉純視覺、聽覺、語障的項次即可
+    if not (63 <= idx <= 81): # 63-81 主要是視障/聽障/語障
         rules.append(RULE_PHYSICAL_STD)
 
-    # 判定第三類 (語障)
+    # --- 3. 定義第三類(語障) ---
     if (78 <= idx <= 81) or "語音" in item_name:
         rules.append(RULE_SPEECH_STD)
 
-    # 判定第二類 (視/聽障)
+    # --- 4. 定義第二類(視/聽障) ---
     if (63 <= idx <= 77) or "視" in item_name or "放大" in item_name:
         rules.append(RULE_VISION_STD)
     if (82 <= idx <= 90) or "聽" in item_name or "助聽器" in item_name:
         rules.append(RULE_HEARING_STD)
 
+    # 確保萬一都沒匹配到，至少給一個第七類
     if not rules:
         rules.append(RULE_PHYSICAL_STD)
+        
     return rules
 
 # 2. 介面呈現
