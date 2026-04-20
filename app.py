@@ -29,7 +29,7 @@ else:
         if not filtered_df.empty:
             # 下拉選單確認具體項次
             selected_id = st.selectbox(
-                "請確認欲查詢的項次：", 
+                "請確認欲查詢的項次：一般戶補助50%、中低收入戶補助75%、低收入戶補助100%", 
                 options=filtered_df['項次'].tolist(),
                 format_func=lambda x: f"項次 {x}: {filtered_df[filtered_df['項次']==x]['名稱'].values[0]}"
             )
