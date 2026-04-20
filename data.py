@@ -2,18 +2,18 @@ import pandas as pd
 
 def load_device_data():
     try:
-        # 強制讀取項次為字串，避免 4.5.6 變成浮點數
+        # 確保項次被讀取為字串，避免 4.5.6 格式出錯
         df = pd.read_csv('assistive_devices.csv', dtype={'項次': str})
         df = df.fillna("")
         return df
     except:
         return None
 
-# ICD 清單 (請維持你原本定義的完整清單)
-DEMENTIA_ICD = ["290.0", "290.10", "290.11", "290.12", "F03", "G30.9"] # ... 略
-INTELLECTUAL_ICD = ["317", "318.0", "F70", "F71", "F72"] # ... 略
+# 定義常用的 ICD 列表
+DEMENTIA_ICD = ["290.0", "290.10", "290.11", "290.12", "290.13", "290.20", "290.21", "290.3", "290.40", "290.41", "290.42", "290.43", "290.8", "290.9", "294.0", "294.10", "294.11", "331.0", "331.1", "F01.50", "F01.51", "F02.80", "F02.81", "F03", "F03.9", "F03.90", "F03.91", "F04", "F05", "G30.0", "G30.1", "G30.8", "G30.9", "G31.0", "G31.09"]
+INTELLECTUAL_ICD = ["317", "318.0", "318.1", "318.2", "319", "F70", "F71", "F72", "F73", "F78", "F79"]
 
-# 16 大類判定地圖 (依據 Excel 隔離儲存格邏輯)
+# 16 大類判定地圖 - 嚴格按儲存格隔離 (符合 1、2、3 順序)
 SPECIAL_RULES_MAP = {
     "4-6": {
         "direct": ["b110.4", "09", "b235", "03", "b710a", "b710b", "b730a", "b730b", "b735", "b765", "s730", "s750", "s760", "05"],
@@ -63,7 +63,7 @@ SPECIAL_RULES_MAP = {
         "direct": ["b110.4", "09", "b710a", "b710b", "b730a", "b730b", "b735", "b765", "s730", "s750", "s760", "05"],
         "groups": [{"icf": ["b110", "b117", "b122", "b140", "b144", "b147", "b152", "b160", "b164", "10"], "icd": DEMENTIA_ICD}]
     },
-    "163-164": {
+    "163.164": {
         "direct": ["b110.4", "09", "b235", "03", "b710a", "b710b", "b730a", "b730b", "b735", "b765", "s730", "s750", "s760", "05"],
         "groups": [{"icf": ["b110", "b117", "b122", "b140", "b144", "b147", "b152", "b160", "b164", "10"], "icd": DEMENTIA_ICD}]
     },
@@ -78,24 +78,22 @@ SPECIAL_RULES_MAP = {
     "170-172": {
         "direct": ["b110.4", "09", "b235", "03", "b710a", "b710b", "b730a", "b730b", "b735", "b765", "s730", "s750", "s760", "05"],
         "groups": [
-            {"name": "(1)智能障礙", "icf": ["b117", "b122", "b140", "b144", "b147", "b160", "b164", "b16700", "b16710", "b16701", "b16711", "06"], "icd": INTELLECTUAL_ICD},
-            {"name": "(2)失智症", "icf": ["b117", "b122", "b140", "b144", "b147", "b152", "b160", "b164", "10"], "icd": DEMENTIA_ICD}
+            {"name": "組合(1): 智能障礙", "icf": ["b117", "b122", "b140", "b144", "b147", "b160", "b164", "b16700", "b16710", "b16701", "b16711", "06"], "icd": INTELLECTUAL_ICD},
+            {"name": "組合(2): 失智症", "icf": ["b117", "b122", "b140", "b144", "b147", "b152", "b160", "b164", "10"], "icd": DEMENTIA_ICD}
         ]
     }
 }
 
 def get_rule_key(item_id):
-    # 支援多個項次寫法，如 CSV 的 4.5.6 或 170
-    raw_id = str(item_id).replace(".", "-") # 處理 4.5.6 這種標點
+    # 將項次轉換為清潔的字串比較
+    clean_id = str(item_id).strip()
     for key in SPECIAL_RULES_MAP.keys():
         if "-" in key:
             try:
                 start, end = map(int, key.split("-"))
-                if start <= int(float(item_id)) <= end: return key
-            except: 
-                # 處理 4.5.6 這種非單一數字的匹配
-                if str(item_id) in key or key in str(item_id): return key
-        elif key == str(item_id): return key
+                if start <= int(float(clean_id)) <= end: return key
+            except: pass
+        if clean_id == key: return key
     return None
 
 # 通用規則
