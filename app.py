@@ -72,15 +72,13 @@ else:
                     st.markdown("---")
                     st.markdown("### 👁️ 本項次法定核可代碼")
                     
-                    # 💡 核心：強行覆蓋 Streamlit 原生 code block 的 CSS
+                    # 強制換行 CSS
                     st.markdown("""
                         <style>
-                        /* 針對所有 st.code 產生的 pre 標籤進行強制換行 */
                         div[data-testid="stCodeBlock"] pre {
                             white-space: pre-wrap !important;
                             word-break: break-all !important;
                         }
-                        /* 隱藏長代碼時產生的水平捲軸 */
                         div[data-testid="stCodeBlock"] code {
                             white-space: pre-wrap !important;
                         }
@@ -92,14 +90,20 @@ else:
                     # A. 優先顯示 data.py 的規則
                     if rule_key and rule_key in SPECIAL_RULES_MAP:
                         rule = SPECIAL_RULES_MAP[rule_key]
+                        
+                        # 1. 直接補助
                         if rule["direct"]:
                             st.write("**📌 直接補助 ICF：**")
-                            # 恢復使用原生的 st.code，它現在會自動換行了
                             st.code(", ".join(rule["direct"]), language="text")
                         
+                        # 2. 組合判定 (修正：加入 ICD 顯示)
                         for g in rule["groups"]:
                             st.write(f"**📌 {g['name']}：**")
-                            st.caption(f"ICF 需求: {', '.join(g['icf'])}")
+                            st.caption(f"需同時滿足以下 ICF 與任一 ICD：")
+                            st.write("**核可 ICF：**")
+                            st.code(", ".join(g['icf']), language="text")
+                            st.write("**核可 ICD：**")
+                            st.code(", ".join(g['icd']), language="text")
                     
                     # B. 顯示 CSV 中的「核可ICF」欄位
                     csv_icf_str = str(item.get('核可ICF', '')).strip()
@@ -109,7 +113,7 @@ else:
                     
                     if not (rule_key and rule_key in SPECIAL_RULES_MAP) and not csv_icf_str:
                         st.write("💡 本項次目前依據通用標準（視、聽、語障）判定。")
-
+                        
                 if item.get('備註'):
                     st.warning(f"💡 **備註說明**：\n\n{item['備註']}")
 
