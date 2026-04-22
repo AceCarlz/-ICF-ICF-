@@ -72,15 +72,20 @@ else:
                     st.markdown("---")
                     st.markdown("### 👁️ 本項次法定核可代碼")
                     
-                    # 強制換行 CSS
+                    # 💡 強化版 CSS：全面覆蓋所有可能的代碼容器
                     st.markdown("""
                         <style>
-                        div[data-testid="stCodeBlock"] pre {
-                            white-space: pre-wrap !important;
-                            word-break: break-all !important;
+                        /* 針對所有代碼區塊的 pre 和 code 標籤 */
+                        div[data-testid="stCodeBlock"] pre, 
+                        div[data-testid="stCodeBlock"] code,
+                        code {
+                            white-space: pre-wrap !important;       /* 強制換行 */
+                            word-wrap: break-word !important;      /* 長單字斷行 */
+                            word-break: break-all !important;      /* 暴力斷行，確保不超出邊界 */
                         }
-                        div[data-testid="stCodeBlock"] code {
-                            white-space: pre-wrap !important;
+                        /* 移除可能產生的水平捲軸外殼 */
+                        div[data-testid="stCodeBlock"] {
+                            overflow-x: hidden !important;
                         }
                         </style>
                     """, unsafe_allow_html=True)
@@ -96,13 +101,16 @@ else:
                             st.write("**📌 直接補助 ICF：**")
                             st.code(", ".join(rule["direct"]), language="text")
                         
-                        # 2. 組合判定 (修正：加入 ICD 顯示)
+                        # 2. 組合判定
                         for g in rule["groups"]:
                             st.write(f"**📌 {g['name']}：**")
                             st.caption(f"需同時滿足以下 ICF 與任一 ICD：")
+                            
                             st.write("**核可 ICF：**")
                             st.code(", ".join(g['icf']), language="text")
+                            
                             st.write("**核可 ICD：**")
+                            # 這裡確保 ICD 字串合併後也能被 CSS 抓到
                             st.code(", ".join(g['icd']), language="text")
                     
                     # B. 顯示 CSV 中的「核可ICF」欄位
