@@ -67,28 +67,46 @@ else:
                 * 👤 **評估人員類別**：{item.get('評估類別', '未列出')}
                 """)
                 
-                # --- 開關觸發：代碼對照顯示 ---
+                # # --- 開關觸發：代碼對照顯示 (支援自動換行版) ---
                 if show_codes:
                     st.markdown("---")
                     st.markdown("### 👁️ 本項次法定核可代碼")
                     
+                    # 注入 CSS 確保代碼區塊會自動換行
+                    st.markdown("""
+                        <style>
+                        .code-wrap {
+                            white-space: pre-wrap;      /* 支援自動換行 */
+                            word-wrap: break-word;     /* 支援長單字斷行 */
+                            background-color: #f0f2f6; 
+                            padding: 10px; 
+                            border-radius: 5px;
+                            font-family: monospace;
+                            line-height: 1.5;
+                        }
+                        </style>
+                    """, unsafe_allow_html=True)
+
                     rule_key = get_rule_key(item['項次'])
                     
-                    # 優先顯示 data.py 的規則
+                    # A. 優先顯示 data.py 的規則
                     if rule_key and rule_key in SPECIAL_RULES_MAP:
                         rule = SPECIAL_RULES_MAP[rule_key]
                         if rule["direct"]:
                             st.write("**📌 直接補助 ICF：**")
-                            st.code(", ".join(rule["direct"]), language="text")
+                            # 使用 HTML 標籤套用剛才定義的 code-wrap 樣式
+                            st.markdown(f'<div class="code-wrap">{", ".join(rule["direct"])}</div>', unsafe_allow_html=True)
+                        
                         for g in rule["groups"]:
                             st.write(f"**📌 {g['name']}：**")
                             st.caption(f"ICF 需求: {', '.join(g['icf'])}")
                     
-                    # 顯示 CSV 中的「核可ICF」欄位 (如果 data.py 沒定義或是額外補充)
+                    # B. 顯示 CSV 中的「核可ICF」欄位
                     csv_icf_str = str(item.get('核可ICF', '')).strip()
                     if csv_icf_str:
                         st.write("**📌 CSV 登記核可 ICF：**")
-                        st.code(csv_icf_str, language="text")
+                        # 同樣套用自動換行樣式
+                        st.markdown(f'<div class="code-wrap">{csv_icf_str}</div>', unsafe_allow_html=True)
                     
                     if not (rule_key and rule_key in SPECIAL_RULES_MAP) and not csv_icf_str:
                         st.write("💡 本項次目前依據通用標準（視、聽、語障）判定。")
