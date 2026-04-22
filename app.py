@@ -67,22 +67,22 @@ else:
                 * 👤 **評估人員類別**：{item.get('評估類別', '未列出')}
                 """)
                 
-                # # --- 開關觸發：代碼對照顯示 (支援自動換行版) ---
+                # --- 開關觸發：代碼對照顯示 ---
                 if show_codes:
                     st.markdown("---")
                     st.markdown("### 👁️ 本項次法定核可代碼")
                     
-                    # 注入 CSS 確保代碼區塊會自動換行
+                    # 💡 核心：強行覆蓋 Streamlit 原生 code block 的 CSS
                     st.markdown("""
                         <style>
-                        .code-wrap {
-                            white-space: pre-wrap;      /* 支援自動換行 */
-                            word-wrap: break-word;     /* 支援長單字斷行 */
-                            background-color: #f0f2f6; 
-                            padding: 10px; 
-                            border-radius: 5px;
-                            font-family: monospace;
-                            line-height: 1.5;
+                        /* 針對所有 st.code 產生的 pre 標籤進行強制換行 */
+                        div[data-testid="stCodeBlock"] pre {
+                            white-space: pre-wrap !important;
+                            word-break: break-all !important;
+                        }
+                        /* 隱藏長代碼時產生的水平捲軸 */
+                        div[data-testid="stCodeBlock"] code {
+                            white-space: pre-wrap !important;
                         }
                         </style>
                     """, unsafe_allow_html=True)
@@ -94,8 +94,8 @@ else:
                         rule = SPECIAL_RULES_MAP[rule_key]
                         if rule["direct"]:
                             st.write("**📌 直接補助 ICF：**")
-                            # 使用 HTML 標籤套用剛才定義的 code-wrap 樣式
-                            st.markdown(f'<div class="code-wrap">{", ".join(rule["direct"])}</div>', unsafe_allow_html=True)
+                            # 恢復使用原生的 st.code，它現在會自動換行了
+                            st.code(", ".join(rule["direct"]), language="text")
                         
                         for g in rule["groups"]:
                             st.write(f"**📌 {g['name']}：**")
@@ -105,8 +105,7 @@ else:
                     csv_icf_str = str(item.get('核可ICF', '')).strip()
                     if csv_icf_str:
                         st.write("**📌 CSV 登記核可 ICF：**")
-                        # 同樣套用自動換行樣式
-                        st.markdown(f'<div class="code-wrap">{csv_icf_str}</div>', unsafe_allow_html=True)
+                        st.code(csv_icf_str, language="text")
                     
                     if not (rule_key and rule_key in SPECIAL_RULES_MAP) and not csv_icf_str:
                         st.write("💡 本項次目前依據通用標準（視、聽、語障）判定。")
