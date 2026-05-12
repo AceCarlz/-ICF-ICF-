@@ -46,7 +46,7 @@ else:
         if not res.empty:
             # 你喜歡的下拉選單編排
             selected_idx = st.selectbox(
-                "請確認具體輔具項目：(一般戶補助50%、中低收入戶補助75%、低收入戶補助100%)",
+                "請確認具體輔具項目：(一般戶補助50%、中低收入戶補助75%、低收入戶補助100%；※代表不分身分別統一補助額)",
                 options=res.index,
                 format_func=lambda i: f"項次 {res.loc[i, '項次']}: {res.loc[i, '名稱']}"
             )
