@@ -1,13 +1,17 @@
 import pandas as pd
 
 def load_device_data():
-    try:
-        # 強制讀取項次為字串，避免如 4.5.6 變成浮點數
-        df = pd.read_csv('assistive_devices.csv', dtype={'項次': str})
-        df = df.fillna("")
-        return df
-    except:
-        return None
+    # 嘗試不同的編碼組合，增加讀取成功率
+    for encoding in ['utf-8-sig', 'utf-8', 'big5']:
+        try:
+            df = pd.read_csv('assistive_devices.csv', dtype={'項次': str}, encoding=encoding)
+            df = df.fillna("")
+            # 順便清理標題行可能產生的多餘空格
+            df.columns = df.columns.str.strip()
+            return df
+        except Exception as e:
+            continue
+    return None
 
 # 失智症 ICD (DEMENTIA)
 DEMENTIA_ICD = [
