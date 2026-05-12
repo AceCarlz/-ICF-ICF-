@@ -125,34 +125,42 @@ else:
                 if item.get('備註'):
                     st.warning(f"💡 **備註說明**：\n\n{item['備註']}")
 
-            # --- 右側：判定引擎 (嚴格執行你提供的正確邏輯) ---
             # --- 右側：判定引擎 ---
             with col2:
                 st.subheader("🧪 資格符合自動判定")
                 
-                # 智慧提示
                 rule_key = get_rule_key(item['項次'])
                 if not (rule_key and rule_key in SPECIAL_RULES_MAP):
                     st.caption("✅ 此品項採單一標準判定，通常僅需輸入 ICF 代碼。")
                 else:
                     st.caption("⚠️ 此品項為複雜判定，請同時輸入 ICF 與 ICD 代碼。")
 
-                # 加入 on_change 或直接檢查輸入值，讓 Enter 也能觸發
-                u_icf_raw = st.text_input("1. 輸入鑑定 ICF 代碼 (多個請用逗號隔開)", placeholder="例如: b117, b110")
-                u_icd_raw = st.text_input("2. 輸入 ICD 診斷碼 (僅部分品項需要)", placeholder="例如: F03")
+                u_icf_raw = st.text_input(
+                    "1. 輸入鑑定 ICF 代碼 (多個請用逗號隔開)", 
+                    placeholder="例如: b117, b110",
+                    key=f"icf_input_{item['項次']}" # 這裡也建議加上 key
+                )
+                u_icd_raw = st.text_input(
+                    "2. 輸入 ICD 診斷碼 (僅部分品項需要)", 
+                    placeholder="例如: F03",
+                    key=f"icd_input_{item['項次']}" # 這裡也建議加上 key
+                )
                 
-                # 建立執行判定的觸發條件：點擊按鈕 OR (ICF輸入框有值且按下Enter)
-                # 在 Streamlit 中，只要 text_input 有變更並按下 Enter，頁面就會重新執行
-                # 我們用一個變數來承接按鈕狀態
-                submit_button = st.button("執行自動判定", type="primary")
+                # 關鍵修正：加上唯一的 key
+                submit_button = st.button(
+                    "執行自動判定", 
+                    type="primary", 
+                    key=f"btn_{item['項次']}"
+                )
 
-                # 只要點了按鈕，或者兩個輸入框「任一有值」且頁面因 Enter 刷新，就執行判定
-                if submit_button or (u_icf_raw):
-                    # 如果是因為按下 Enter 觸發但沒輸入 ICF，則不執行
+                # 判定邏輯 (當按下按鈕或在輸入框按 Enter)
+                if submit_button or (u_icf_raw and u_icd_raw) or (u_icf_raw and not (rule_key and rule_key in SPECIAL_RULES_MAP)):
                     if not u_icf_raw:
-                        st.warning("請至少輸入 ICF 代碼再進行判定。")
+                        # 只有在按了按鈕卻沒填寫時提示
+                        if submit_button:
+                            st.warning("請至少輸入 ICF 代碼再進行判定。")
                     else:
-                        # --- 核心判定邏輯開始 ---
+                        # [執行先前的判定邏輯 A, B, C ...]
                         u_icfs = [x.strip().lower() for x in u_icf_raw.split(",") if x.strip()]
                         u_icd = u_icd_raw.strip().upper()
                         
