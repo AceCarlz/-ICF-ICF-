@@ -126,10 +126,77 @@ else:
                     st.warning(f"💡 **備註說明**：\n\n{item['備註']}")
 
             # --- 右側：判定引擎 (嚴格執行你提供的正確邏輯) ---
+            # --- 右側：判定引擎 ---
             with col2:
                 st.subheader("🧪 資格符合自動判定")
+                
+                # 智慧提示
+                rule_key = get_rule_key(item['項次'])
+                if not (rule_key and rule_key in SPECIAL_RULES_MAP):
+                    st.caption("✅ 此品項採單一標準判定，通常僅需輸入 ICF 代碼。")
+                else:
+                    st.caption("⚠️ 此品項為複雜判定，請同時輸入 ICF 與 ICD 代碼。")
+
+                # 加入 on_change 或直接檢查輸入值，讓 Enter 也能觸發
                 u_icf_raw = st.text_input("1. 輸入鑑定 ICF 代碼 (多個請用逗號隔開)", placeholder="例如: b117, b110")
                 u_icd_raw = st.text_input("2. 輸入 ICD 診斷碼 (僅部分品項需要)", placeholder="例如: F03")
+                
+                # 建立執行判定的觸發條件：點擊按鈕 OR (ICF輸入框有值且按下Enter)
+                # 在 Streamlit 中，只要 text_input 有變更並按下 Enter，頁面就會重新執行
+                # 我們用一個變數來承接按鈕狀態
+                submit_button = st.button("執行自動判定", type="primary")
+
+                # 只要點了按鈕，或者兩個輸入框「任一有值」且頁面因 Enter 刷新，就執行判定
+                if submit_button or (u_icf_raw):
+                    # 如果是因為按下 Enter 觸發但沒輸入 ICF，則不執行
+                    if not u_icf_raw:
+                        st.warning("請至少輸入 ICF 代碼再進行判定。")
+                    else:
+                        # --- 核心判定邏輯開始 ---
+                        u_icfs = [x.strip().lower() for x in u_icf_raw.split(",") if x.strip()]
+                        u_icd = u_icd_raw.strip().upper()
+                        
+                        is_match = False
+                        reason = ""
+                        
+                        # A. data.py 軌道
+                        if rule_key and rule_key in SPECIAL_RULES_MAP:
+                            rule = SPECIAL_RULES_MAP[rule_key]
+                            hits = [i for i in u_icfs if i in [c.lower() for c in rule["direct"]]]
+                            if hits:
+                                is_match, reason = True, f"符合特定核可代碼 (命中: {', '.join(hits)})"
+                            
+                            if not is_match:
+                                for g in rule["groups"]:
+                                    icf_ok = any(i in u_icfs for i in [c.lower() for c in g["icf"]])
+                                    icd_ok = u_icd in [c.upper() for c in g["icd"]]
+                                    if icf_ok and icd_ok:
+                                        is_match, reason = True, f"符合 {g['name']} 組合條件判定"
+                                        break
+                        
+                        # B. CSV 軌道 (條件包含邏輯)
+                        if not is_match:
+                            csv_icf_raw = str(item.get('核可ICF', '')).lower()
+                            if csv_icf_raw:
+                                found_hits = [i for i in u_icfs if i in csv_icf_raw]
+                                if found_hits:
+                                    is_match = True
+                                    reason = f"符合手冊登記之核可 ICF 代碼 (命中: {', '.join(found_hits)})"
+
+                        # C. 通用標準
+                        if not is_match:
+                            for r in [RULE_SPEECH_STD, RULE_VISION_STD, RULE_HEARING_STD]:
+                                if any(i in u_icfs for i in [c.lower() for c in r["icf"]]):
+                                    is_match, reason = True, f"符合 {r['cat']} 通用判定標準"
+                                    break
+
+                        # --- 結果呈現 ---
+                        if is_match:
+                            st.success(f"🎯 **判定結果：符合補助條件**\n\n判定依據：{reason}")
+                            if "18歲" in str(item.get('核可ICF', '')):
+                                st.info("⚠️ 注意：此項次於手冊中有標註年齡限制，請手動確認申請人年齡。")
+                        else:
+                            st.error("❌ **判定結果：不符合補助條件**\n\n原因：輸入之代碼組合未命中該項次之法規標準。")
                 
         if st.button("執行自動判定", type="primary"):
                     # 資料清理：轉小寫並去除空白
