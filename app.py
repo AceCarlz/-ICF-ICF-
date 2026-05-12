@@ -131,7 +131,7 @@ else:
                 u_icf_raw = st.text_input("1. 輸入鑑定 ICF 代碼 (多個請用逗號隔開)", placeholder="例如: b117, b110")
                 u_icd_raw = st.text_input("2. 輸入 ICD 診斷碼 (僅部分品項需要)", placeholder="例如: F03")
                 
-if st.button("執行自動判定", type="primary"):
+        if st.button("執行自動判定", type="primary"):
                     # 資料清理：轉小寫並去除空白
                     u_icfs = [x.strip().lower() for x in u_icf_raw.split(",") if x.strip()]
                     u_icd = u_icd_raw.strip().upper()
