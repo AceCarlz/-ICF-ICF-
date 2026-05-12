@@ -8,8 +8,8 @@ from data import (
 # 1. 網頁基礎配置
 st.set_page_config(page_title="輔助器具補助查詢系統", layout="wide")
 
-# 2. 清除快取與讀取機制 (確保轉圈圈問題解決)
-@st.cache_data(ttl=600)  # 每 10 分鐘自動重整
+# 2. 清除快取與讀取機制
+@st.cache_data(ttl=600)
 def get_cached_data():
     return load_device_data()
 
@@ -27,10 +27,8 @@ else:
         search_query = st.text_input("輸入『項次』或『輔具名稱』", placeholder="例如: 91 或 輪椅")
         
         st.divider()
-        # 功能：一鍵切換顯示/隱藏
         show_codes = st.toggle("📂 顯示本項核可代碼 (電話對照用)", value=False)
         
-        # 功能：手動強制刷新 (解決數據同步或轉圈圈問題)
         if st.button("🔄 重新整理資料庫"):
             st.cache_data.clear()
             st.rerun()
@@ -44,7 +42,6 @@ else:
         res = df[mask]
         
         if not res.empty:
-            # 你喜歡的下拉選單編排
             selected_idx = st.selectbox(
                 "請確認具體輔具項目：(一般戶補助50%、中低收入戶補助75%、低收入戶補助100%；※代表不分身分別統一補助額)",
                 options=res.index,
@@ -67,23 +64,18 @@ else:
                 * 👤 **評估人員類別**：{item.get('評估類別', '未列出')}
                 """)
                 
-                # --- 開關觸發：代碼對照顯示 ---
                 if show_codes:
                     st.markdown("---")
                     st.markdown("### 👁️ 本項次法定核可代碼")
-                    
-                    # 💡 強化版 CSS：全面覆蓋所有可能的代碼容器
                     st.markdown("""
                         <style>
-                        /* 針對所有代碼區塊的 pre 和 code 標籤 */
                         div[data-testid="stCodeBlock"] pre, 
                         div[data-testid="stCodeBlock"] code,
                         code {
-                            white-space: pre-wrap !important;       /* 強制換行 */
-                            word-wrap: break-word !important;      /* 長單字斷行 */
-                            word-break: break-all !important;      /* 暴力斷行，確保不超出邊界 */
+                            white-space: pre-wrap !important;
+                            word-wrap: break-word !important;
+                            word-break: break-all !important;
                         }
-                        /* 移除可能產生的水平捲軸外殼 */
                         div[data-testid="stCodeBlock"] {
                             overflow-x: hidden !important;
                         }
@@ -91,37 +83,25 @@ else:
                     """, unsafe_allow_html=True)
 
                     rule_key = get_rule_key(item['項次'])
-                    
-                    # A. 優先顯示 data.py 的規則
                     if rule_key and rule_key in SPECIAL_RULES_MAP:
                         rule = SPECIAL_RULES_MAP[rule_key]
-                        
-                        # 1. 直接補助
                         if rule["direct"]:
                             st.write("**📌 直接補助 ICF：**")
                             st.code(", ".join(rule["direct"]), language="text")
                         
-                        # 2. 組合判定
                         for g in rule["groups"]:
                             st.write(f"**📌 {g['name']}：**")
                             st.caption(f"需同時滿足以下 ICF 與任一 ICD：")
-                            
                             st.write("**核可 ICF：**")
                             st.code(", ".join(g['icf']), language="text")
-                            
                             st.write("**核可 ICD：**")
-                            # 這裡確保 ICD 字串合併後也能被 CSS 抓到
                             st.code(", ".join(g['icd']), language="text")
                     
-                    # B. 顯示 CSV 中的「核可ICF」欄位
                     csv_icf_str = str(item.get('核可ICF', '')).strip()
                     if csv_icf_str:
                         st.write("**📌 CSV 登記核可 ICF：**")
                         st.code(csv_icf_str, language="text")
-                    
-                    if not (rule_key and rule_key in SPECIAL_RULES_MAP) and not csv_icf_str:
-                        st.write("💡 本項次目前依據通用標準（視、聽、語障）判定。")
-                        
+                
                 if item.get('備註'):
                     st.warning(f"💡 **備註說明**：\n\n{item['備註']}")
 
@@ -138,32 +118,28 @@ else:
                 u_icf_raw = st.text_input(
                     "1. 輸入鑑定 ICF 代碼 (多個請用逗號隔開)", 
                     placeholder="例如: b117, b110",
-                    key=f"icf_input_{item['項次']}" # 這裡也建議加上 key
+                    key=f"icf_in_{item['項次']}"
                 )
                 u_icd_raw = st.text_input(
                     "2. 輸入 ICD 診斷碼 (僅部分品項需要)", 
                     placeholder="例如: F03",
-                    key=f"icd_input_{item['項次']}" # 這裡也建議加上 key
+                    key=f"icd_in_{item['項次']}"
                 )
                 
-                # 關鍵修正：加上唯一的 key
                 submit_button = st.button(
                     "執行自動判定", 
                     type="primary", 
-                    key=f"btn_{item['項次']}"
+                    key=f"btn_run_{item['項次']}"
                 )
 
-                # 判定邏輯 (當按下按鈕或在輸入框按 Enter)
-                if submit_button or (u_icf_raw and u_icd_raw) or (u_icf_raw and not (rule_key and rule_key in SPECIAL_RULES_MAP)):
+                # 觸發判定：按按鈕 或 (輸入內容後按 Enter)
+                if submit_button or (u_icf_raw):
                     if not u_icf_raw:
-                        # 只有在按了按鈕卻沒填寫時提示
                         if submit_button:
                             st.warning("請至少輸入 ICF 代碼再進行判定。")
                     else:
-                        # [執行先前的判定邏輯 A, B, C ...]
                         u_icfs = [x.strip().lower() for x in u_icf_raw.split(",") if x.strip()]
                         u_icd = u_icd_raw.strip().upper()
-                        
                         is_match = False
                         reason = ""
                         
@@ -198,64 +174,12 @@ else:
                                     is_match, reason = True, f"符合 {r['cat']} 通用判定標準"
                                     break
 
-                        # --- 結果呈現 ---
+                        # 結果呈現
                         if is_match:
                             st.success(f"🎯 **判定結果：符合補助條件**\n\n判定依據：{reason}")
                             if "18歲" in str(item.get('核可ICF', '')):
                                 st.info("⚠️ 注意：此項次於手冊中有標註年齡限制，請手動確認申請人年齡。")
                         else:
-                            st.error("❌ **判定結果：不符合補助條件**\n\n原因：輸入之代碼組合未命中該項次之法規標準。")
-                
-        if st.button("執行自動判定", type="primary"):
-                    # 資料清理：轉小寫並去除空白
-                    u_icfs = [x.strip().lower() for x in u_icf_raw.split(",") if x.strip()]
-                    u_icd = u_icd_raw.strip().upper()
-                    
-                    is_match = False
-                    reason = ""
-                    
-                    # --- A. 優先軌道：檢查 data.py (16大類複雜規則) ---
-                    rule_key = get_rule_key(item['項次'])
-                    if rule_key and rule_key in SPECIAL_RULES_MAP:
-                        rule = SPECIAL_RULES_MAP[rule_key]
-                        
-                        # 1. 滿足任一 ICF 即可補助 (Direct Match)
-                        hits = [i for i in u_icfs if i in [c.lower() for c in rule["direct"]]]
-                        if hits:
-                            is_match, reason = True, f"符合特定核可代碼 (命中: {', '.join(hits)})"
-                        
-                        # 2. 組合判定 (Group Match: ICF + ICD)
-                        if not is_match:
-                            for g in rule["groups"]:
-                                icf_ok = any(i in u_icfs for i in [c.lower() for c in g["icf"]])
-                                icd_ok = u_icd in [c.upper() for c in g["icd"]]
-                                if icf_ok and icd_ok:
-                                    is_match, reason = True, f"符合 {g['name']} 組合條件判定"
-                                    break
-                    
-                    # --- B. 次要軌道：檢查 CSV 核可ICF (條件包含邏輯) ---
-                    if not is_match:
-                        csv_icf_raw = str(item.get('核可ICF', '')).lower()
-                        if csv_icf_raw:
-                            # 只要使用者輸入的任一個代碼「存在於」CSV 的那一串文字中
-                            found_hits = [i for i in u_icfs if i in csv_icf_raw]
-                            if found_hits:
-                                is_match = True
-                                reason = f"符合手冊登記之核可 ICF 代碼 (命中: {', '.join(found_hits)})"
-
-                    # --- C. 墊底軌道：通用標準 (視聽語) ---
-                    if not is_match:
-                        for r in [RULE_SPEECH_STD, RULE_VISION_STD, RULE_HEARING_STD]:
-                            if any(i in u_icfs for i in [c.lower() for c in r["icf"]]):
-                                is_match, reason = True, f"符合 {r['cat']} 通用判定標準"
-                                break
-
-                    # 結果呈現
-                    if is_match:
-                        st.success(f"🎯 **判定結果：符合補助條件**\n\n判定依據：{reason}")
-                        if "18歲" in str(item.get('核可ICF', '')):
-                            st.info("⚠️ 注意：此項次於手冊中有標註年齡限制，請手動確認申請人年齡。")
-                    else:
-                        st.error("❌ **判定結果：不符合補助條件**\n\n原因：輸入之代碼組合未命中該項次之法定標準。")
+                            st.error("❌ **判定結果：不符合補助條件**\n\n原因：輸入之代碼組合未命中該項次之法定標準。")
         else:
             st.warning("查無符合的項次或輔具名稱，請重新輸入關鍵字。")
