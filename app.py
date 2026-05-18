@@ -6,7 +6,7 @@ from data import (
 )
 
 # 1. 網頁基礎配置
-st.set_page_config(page_title="輔助器具補助查詢系統", layout="wide")
+st.set_page_config(page_title="輔助器具補助智慧查詢系統", layout="wide")
 
 # 2. 清除快取與讀取機制
 @st.cache_data(ttl=600)
@@ -19,7 +19,7 @@ if df is None:
     st.error("❌ 找不到資料庫檔案 (assistive_devices.csv)，請確認檔案已上傳至 GitHub。")
 else:
     st.title("📂 輔助器具補助智慧查詢系統")
-    st.caption("判定邏輯：data.py 特定規則 > CSV 登記之 ICF > 通用標準判定")
+    st.caption("🚀 判定邏輯已優化：複雜特定規則（獨立判定）/ 一般品項（CSV 登記 ICF > 通用標準）")
 
     # 3. 側邊欄：搜尋、顯示開關、手動刷新
     with st.sidebar:
@@ -110,10 +110,12 @@ else:
                 st.subheader("🧪 資格符合自動判定")
                 
                 rule_key = get_rule_key(item['項次'])
-                if not (rule_key and rule_key in SPECIAL_RULES_MAP):
+                is_special_rule = rule_key and rule_key in SPECIAL_RULES_MAP
+                
+                if not is_special_rule:
                     st.caption("✅ 此品項採單一標準判定，通常僅需輸入 ICF 代碼。")
                 else:
-                    st.caption("⚠️ 此品項為複雜判定，請同時輸入 ICF 與 ICD 代碼。")
+                    st.caption("⚠️ 此品項為複雜判定，請【同時輸入】ICF 與 ICD 代碼進行交叉比對。")
 
                 u_icf_raw = st.text_input(
                     "1. 輸入鑑定 ICF 代碼 (多個請用逗號隔開)", 
@@ -121,7 +123,7 @@ else:
                     key=f"icf_in_{item['項次']}"
                 )
                 u_icd_raw = st.text_input(
-                    "2. 輸入 ICD 診斷碼 (僅部分品項需要)", 
+                    "2. 輸入 ICD 診斷碼 (複雜判定品項必填)", 
                     placeholder="例如: F03",
                     key=f"icd_in_{item['項次']}"
                 )
@@ -132,54 +134,79 @@ else:
                     key=f"btn_run_{item['項次']}"
                 )
 
-                # 觸發判定：按按鈕 或 (輸入內容後按 Enter)
-                if submit_button or (u_icf_raw):
+                # 智慧型觸發判斷：有按按鈕，或是使用者打完字引發頁面刷新
+                # 如果是複雜規則項目，按 Enter 觸發必須確保使用者兩個框框都注意到了（ICF有值即可觸發，由後面防呆邏輯接手）
+                if submit_button or u_icf_raw:
                     if not u_icf_raw:
                         if submit_button:
                             st.warning("請至少輸入 ICF 代碼再進行判定。")
                     else:
+                        # 資料標準化整理
                         u_icfs = [x.strip().lower() for x in u_icf_raw.split(",") if x.strip()]
                         u_icd = u_icd_raw.strip().upper()
+                        
                         is_match = False
                         reason = ""
-                        
-                        # A. data.py 軌道
-                        if rule_key and rule_key in SPECIAL_RULES_MAP:
+                        has_checked = False # 用來標記是否已經由特定規則判定完畢
+
+                        # ==================== 軌道 A：複雜特定規則判定 ====================
+                        if is_special_rule:
+                            has_checked = True # 只要屬於特殊規則，就不允許流向一般品項判定
                             rule = SPECIAL_RULES_MAP[rule_key]
+                            
+                            # A-1. 優先檢查是否命中「免 ICD 直通車」的特定 ICF
                             hits = [i for i in u_icfs if i in [c.lower() for c in rule["direct"]]]
                             if hits:
-                                is_match, reason = True, f"符合特定核可代碼 (命中: {', '.join(hits)})"
+                                is_match = True
+                                reason = f"符合特定直通核可代碼 (命中: {', '.join(hits)})"
                             
+                            # A-2. 若未直通，嚴格執行「ICF + ICD 組合判定」
                             if not is_match:
-                                for g in rule["groups"]:
-                                    icf_ok = any(i in u_icfs for i in [c.lower() for c in g["icf"]])
-                                    icd_ok = u_icd in [c.upper() for c in g["icd"]]
-                                    if icf_ok and icd_ok:
-                                        is_match, reason = True, f"符合 {g['name']} 組合條件判定"
-                                        break
-                        
-                        # B. CSV 軌道 (條件包含邏輯)
-                        if not is_match:
-                            csv_icf_raw = str(item.get('核可ICF', '')).lower()
-                            if csv_icf_raw:
-                                found_hits = [i for i in u_icfs if i in csv_icf_raw]
-                                if found_hits:
-                                    is_match = True
-                                    reason = f"符合手冊登記之核可 ICF 代碼 (命中: {', '.join(found_hits)})"
+                                if not u_icd:
+                                    # 防呆：如果是複雜項目，只打了 ICF 按 Enter 卻沒打 ICD 時，給予友善提示，不直接給不符合
+                                    st.info("💡 此品項需搭配 ICD 診斷碼進行組合判定，請輸入 ICD 診斷碼。")
+                                    has_checked = False # 阻斷本次結果呈現，等待使用者輸入 ICD
+                                else:
+                                    for g in rule["groups"]:
+                                        icf_ok = any(i in u_icfs for i in [c.lower() for c in g["icf"]])
+                                        icd_ok = u_icd in [c.upper() for c in g["icd"]]
+                                        if icf_ok and icd_ok:
+                                            is_match = True
+                                            reason = f"符合 {g['name']} 組合條件判定"
+                                            break
 
-                        # C. 通用標準
-                        if not is_match:
-                            for r in [RULE_SPEECH_STD, RULE_VISION_STD, RULE_HEARING_STD]:
-                                if any(i in u_icfs for i in [c.lower() for c in r["icf"]]):
-                                    is_match, reason = True, f"符合 {r['cat']} 通用判定標準"
-                                    break
+                        # ==================== 一般品項判定 (非複雜規則才執行) ====================
+                        if not has_checked:
+                            # 只有當不屬於特殊複雜規則，或者複雜規則內未被阻斷時，才進行一般判定
+                            if not is_special_rule: 
+                                # 軌道 B：CSV 包含判定
+                                csv_icf_raw = str(item.get('核可ICF', '')).lower()
+                                if csv_icf_raw:
+                                    found_hits = [i for i in u_icfs if i in csv_icf_raw]
+                                    if found_hits:
+                                        is_match = True
+                                        reason = f"符合手冊登記之核可 ICF 代碼 (命中: {', '.join(found_hits)})"
 
-                        # 結果呈現
-                        if is_match:
-                            st.success(f"🎯 **判定結果：符合補助條件**\n\n判定依據：{reason}")
-                            if "18歲" in str(item.get('核可ICF', '')):
-                                st.info("⚠️ 注意：此項次於手冊中有標註年齡限制，請手動確認申請人年齡。")
-                        else:
-                            st.error("❌ **判定結果：不符合補助條件**\n\n原因：輸入之代碼組合未命中該項次之法定標準。")
+                                # 軌道 C：通用標準
+                                if not is_match:
+                                    for r in [RULE_SPEECH_STD, RULE_VISION_STD, RULE_HEARING_STD]:
+                                        if any(i in u_icfs for i in [c.lower() for c in r["icf"]]):
+                                            is_match = True
+                                            reason = f"符合 {r['cat']} 通用判定標準"
+                                            break
+                                            
+                                has_checked = True # 標記一般品項也判定完成
+
+                        # ==================== 結果呈現 ====================
+                        if has_checked:
+                            if is_match:
+                                st.success(f"🎯 **判定結果：符合補助條件**\n\n判定依據：{reason}")
+                                if "18歲" in str(item.get('核可ICF', '')):
+                                    st.info("⚠️ 注意：此項次於手冊中有標註年齡限制，請手動確認申請人年齡。")
+                            else:
+                                if is_special_rule:
+                                    st.error("❌ **判定結果：不符合補助條件**\n\n原因：輸入之 ICF 與 ICD 組合未命中該項次的法定配對標準。")
+                                else:
+                                    st.error("❌ **判定結果：不符合補助條件**\n\n原因：輸入之代碼組合未命中該項次之法定標準。")
         else:
             st.warning("查無符合的項次或輔具名稱，請重新輸入關鍵字。")
